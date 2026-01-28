@@ -281,7 +281,11 @@ def show_viewer_dashboard():
     if procurements.empty:
         st.error("No data available. Please initialize the database.")
         if st.button("Initialize Database"):
+            try:
             from database.init_db import main as init_db
+            except ImportError:
+            st.error("Database module not found. Using basic setup.")
+            init_db = None
             init_db()
             init_db()
             st.cache_data.clear()
@@ -817,4 +821,5 @@ if __name__ == "__main__":
         <p>🔍 Detection Rules: Cost overruns (>10%) • Large direct contracts • Short durations (<30 days)</p>
         <p>⏱️ Last updated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
     </div>
+
     """, unsafe_allow_html=True)
