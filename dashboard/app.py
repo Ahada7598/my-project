@@ -1,4 +1,4 @@
-# dashboard/app.py
+# dashboard/app.py 
 import streamlit as st
 import pandas as pd
 import sqlite3
@@ -8,6 +8,7 @@ import os
 import hashlib
 import json
 from pathlib import Path
+import traceback
 
 # ==================== PAGE SETUP ====================
 st.set_page_config(
@@ -21,22 +22,101 @@ st.set_page_config(
 def get_connection():
     """Get SQLite database connection"""
     db_path = Path("procurement.db")
+    
+    # Create basic tables if database doesn't exist
     if not db_path.exists():
-        # Create database if it doesn't exist
-        from database.init_db import SQLiteBulkLoader
-        loader = SQLiteBulkLoader(str(db_path))
-        loader.connect()
-        loader.disconnect()
+        create_basic_tables()
     
     conn = sqlite3.connect(str(db_path), check_same_thread=False)
-    conn.row_factory = sqlite3.Row  # Return rows as dictionaries
+    conn.row_factory = sqlite3.Row
     return conn
 
-@st.cache_data(ttl=300)  # Cache for 5 minutes
+def create_basic_tables():
+    """Create basic database tables if they don't exist"""
+    try:
+        conn = sqlite3.connect("procurement.db")
+        cursor = conn.cursor()
+        
+        # Create tables
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS agencies (
+                agency_code TEXT PRIMARY KEY,
+                agency_name TEXT,
+                agency_type TEXT
+            )
+        """)
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS vendors (
+                vendor_code TEXT PRIMARY KEY,
+                vendor_name TEXT,
+                vendor_country TEXT,
+                vendor_type TEXT
+            )
+        """)
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS world_bank_indicators (
+                indicator_year INTEGER PRIMARY KEY,
+                gdp_growth REAL,
+                inflation_rate REAL,
+                government_expenditure REAL
+            )
+        """)
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS procurements (
+                procurement_id INTEGER PRIMARY KEY,
+                procurement_year INTEGER,
+                agency_code TEXT,
+                agency_name TEXT,
+                project_name TEXT,
+                procurement_category TEXT,
+                estimated_cost REAL,
+                actual_cost REAL,
+                procurement_method TEXT,
+                vendor_code TEXT,
+                vendor_name TEXT,
+                contract_start_date DATE,
+                contract_end_date DATE,
+                procurement_status TEXT,
+                created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS bids (
+                bid_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                procurement_id INTEGER,
+                vendor_code TEXT,
+                vendor_name TEXT,
+                bid_amount REAL,
+                bid_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                status TEXT DEFAULT 'Submitted'
+            )
+        """)
+        
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        st.error(f"Error creating database: {e}")
+        return False
+
+@st.cache_data(ttl=300)
 def load_data():
     """Load data from SQLite"""
     try:
         conn = get_connection()
+        
+        # Check if tables have data
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM procurements")
+        count = cursor.fetchone()[0]
+        
+        if count == 0:
+            # Tables exist but are empty
+            return pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
         
         # Load data with SQL queries
         procurements = pd.read_sql_query("""
@@ -66,8 +146,47 @@ def load_data():
         
     except Exception as e:
         st.error(f"Database error: {e}")
-        # Return empty DataFrames
         return pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+
+# ==================== LOAD DATA FROM CSV ====================
+def load_data_from_csv():
+    """Load data from CSV files and insert into database"""
+    try:
+        data_dir = Path("data")
+        
+        # Check if data directory exists
+        if not data_dir.exists():
+            st.error("Data directory not found. Please create a 'data' folder with CSV files.")
+            return False
+        
+        # Load CSV files
+        agencies_df = pd.read_csv(data_dir / "agencies.csv")
+        vendors_df = pd.read_csv(data_dir / "vendors.csv")
+        world_bank_df = pd.read_csv(data_dir / "world_bank_indicators.csv")
+        procurements_df = pd.read_csv(data_dir / "procurements.csv")
+        
+        # Connect to database
+        conn = sqlite3.connect("procurement.db")
+        
+        # Insert data
+        agencies_df.to_sql('agencies', conn, if_exists='replace', index=False)
+        vendors_df.to_sql('vendors', conn, if_exists='replace', index=False)
+        world_bank_df.to_sql('world_bank_indicators', conn, if_exists='replace', index=False)
+        procurements_df.to_sql('procurements', conn, if_exists='replace', index=False)
+        
+        conn.commit()
+        conn.close()
+        
+        st.success(f"✅ Loaded {len(agencies_df)} agencies, {len(vendors_df)} vendors, "
+                   f"{len(world_bank_df)} World Bank records, and {len(procurements_df)} procurements")
+        return True
+        
+    except FileNotFoundError as e:
+        st.error(f"CSV file not found: {e}")
+        return False
+    except Exception as e:
+        st.error(f"Error loading data: {e}")
+        return False
 
 # ==================== AUTHENTICATION SYSTEM ====================
 class AuthenticationSystem:
@@ -279,18 +398,28 @@ def show_viewer_dashboard():
     procurements, agencies, vendors, world_bank = load_data()
     
     if procurements.empty:
-        st.error("No data available. Please initialize the database.")
-        if st.button("Initialize Database"):
-            try:
-            from database.init_db import main as init_db
-            except ImportError:
-            st.error("Database module not found. Using basic setup.")
-            init_db = None
-            init_db()
-            init_db()
-            st.cache_data.clear()
-            st.cache_resource.clear()
-            st.rerun()
+        st.error("No data available. Please load data from CSV files.")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("📂 Load Data from CSV Files", type="primary"):
+                with st.spinner("Loading data from CSV files..."):
+                    if load_data_from_csv():
+                        st.cache_data.clear()
+                        st.rerun()
+        
+        with col2:
+            if st.button("🔄 Check Database Connection"):
+                try:
+                    conn = sqlite3.connect("procurement.db")
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+                    tables = cursor.fetchall()
+                    conn.close()
+                    st.success(f"✅ Database connected. Tables: {[t[0] for t in tables]}")
+                except Exception as e:
+                    st.error(f"❌ Database error: {e}")
+        
         return
     
     # Calculate anomalies
@@ -466,322 +595,6 @@ def show_viewer_dashboard():
             mime="text/csv"
         )
 
-# ==================== ADMIN DASHBOARD ====================
-def show_admin_dashboard():
-    """Dashboard for Admin role (full control)"""
-    
-    # Load data
-    procurements, agencies, vendors, world_bank = load_data()
-    
-    if procurements.empty:
-        st.error("No data available.")
-        return
-    
-    # Calculate anomalies
-    procurements = calculate_anomalies(procurements)
-    
-    # Header
-    col1, col2, col3 = st.columns([3, 2, 1])
-    with col1:
-        st.title("⚙️ Admin Control Panel")
-        st.markdown(f"**Welcome, {st.session_state.name} (Administrator)**")
-    with col3:
-        if st.button("🚪 Logout", type="secondary"):
-            AuthenticationSystem.logout()
-            st.rerun()
-    
-    st.markdown("---")
-    
-    # Data Management Tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["📝 Edit Data", "➕ Add New", "🗑️ Delete", "📊 Analytics"])
-    
-    with tab1:
-        st.header("Edit Procurement Records")
-        
-        search_id = st.text_input("Search by Procurement ID:")
-        
-        if search_id:
-            record = procurements[procurements['procurement_id'].astype(str) == search_id]
-            
-            if not record.empty:
-                record = record.iloc[0]
-                
-                with st.form("edit_form"):
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        new_estimated = st.number_input("Estimated Cost", value=float(record['estimated_cost']))
-                        new_actual = st.number_input("Actual Cost", value=float(record['actual_cost']) if pd.notna(record['actual_cost']) else 0.0)
-                        new_method = st.selectbox(
-                            "Procurement Method",
-                            ["Open", "Limited", "Direct", "Single"],
-                            index=["Open", "Limited", "Direct", "Single"].index(record['procurement_method']) 
-                            if record['procurement_method'] in ["Open", "Limited", "Direct", "Single"] else 0
-                        )
-                    
-                    with col2:
-                        new_status = st.selectbox(
-                            "Status",
-                            ["Ongoing", "Completed", "Cancelled"],
-                            index=["Ongoing", "Completed", "Cancelled"].index(record['procurement_status']) 
-                            if record['procurement_status'] in ["Ongoing", "Completed", "Cancelled"] else 0
-                        )
-                        
-                        if pd.notna(record['contract_start_date']):
-                            new_start = st.date_input("Start Date", value=record['contract_start_date'].date())
-                        else:
-                            new_start = st.date_input("Start Date")
-                        
-                        if pd.notna(record['contract_end_date']):
-                            new_end = st.date_input("End Date", value=record['contract_end_date'].date())
-                        else:
-                            new_end = st.date_input("End Date")
-                    
-                    if st.form_submit_button("💾 Save Changes", type="primary"):
-                        # Update database
-                        try:
-                            conn = get_connection()
-                            cursor = conn.cursor()
-                            cursor.execute("""
-                                UPDATE procurements 
-                                SET estimated_cost = ?, actual_cost = ?, procurement_method = ?,
-                                    procurement_status = ?, contract_start_date = ?, contract_end_date = ?
-                                WHERE procurement_id = ?
-                            """, (new_estimated, new_actual, new_method, new_status, 
-                                  new_start.isoformat(), new_end.isoformat(), int(search_id)))
-                            conn.commit()
-                            st.success(f"✅ Record {search_id} updated successfully!")
-                            st.cache_data.clear()
-                        except Exception as e:
-                            st.error(f"Error: {e}")
-    
-    with tab2:
-        st.header("Add New Procurement Record")
-        
-        with st.form("add_form"):
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                new_id = st.number_input("Procurement ID", min_value=1, step=1)
-                new_year = st.number_input("Year", min_value=2010, max_value=2024, value=2023)
-                agency = st.selectbox("Agency", agencies['agency_name'].tolist())
-                project = st.text_input("Project Name")
-                category = st.selectbox("Category", ["Works", "Goods", "Services"])
-            
-            with col2:
-                estimated = st.number_input("Estimated Cost ($)", min_value=0.0, value=100000.0)
-                actual = st.number_input("Actual Cost ($)", min_value=0.0, value=0.0)
-                method = st.selectbox("Method", ["Open", "Limited", "Direct", "Single"])
-                vendor = st.selectbox("Vendor", vendors['vendor_name'].tolist()[:50])
-                status = st.selectbox("Status", ["Ongoing", "Completed"])
-            
-            start_date = st.date_input("Start Date")
-            end_date = st.date_input("End Date")
-            
-            if st.form_submit_button("➕ Add New Record", type="primary"):
-                try:
-                    conn = get_connection()
-                    cursor = conn.cursor()
-                    
-                    # Get agency and vendor codes
-                    agency_code = agencies[agencies['agency_name'] == agency]['agency_code'].iloc[0]
-                    vendor_code = vendors[vendors['vendor_name'] == vendor]['vendor_code'].iloc[0]
-                    
-                    cursor.execute("""
-                        INSERT INTO procurements 
-                        (procurement_id, procurement_year, agency_code, agency_name, 
-                         project_name, procurement_category, estimated_cost, actual_cost,
-                         procurement_method, vendor_code, vendor_name, 
-                         contract_start_date, contract_end_date, procurement_status)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (int(new_id), int(new_year), agency_code, agency, project, category,
-                          estimated, actual, method, vendor_code, vendor,
-                          start_date.isoformat(), end_date.isoformat(), status))
-                    
-                    conn.commit()
-                    st.success("✅ New record added successfully!")
-                    st.cache_data.clear()
-                    
-                except Exception as e:
-                    st.error(f"Error: {e}")
-    
-    with tab3:
-        st.header("Delete Records")
-        st.warning("⚠️ **CAUTION**: This action cannot be undone!")
-        
-        delete_id = st.text_input("Enter Procurement ID to delete:")
-        
-        if delete_id:
-            record_exists = delete_id in procurements['procurement_id'].astype(str).values
-            
-            if record_exists:
-                st.error(f"Record {delete_id} will be permanently deleted!")
-                
-                if st.button("🗑️ Confirm Delete", type="primary"):
-                    try:
-                        conn = get_connection()
-                        cursor = conn.cursor()
-                        cursor.execute("DELETE FROM procurements WHERE procurement_id = ?", (int(delete_id),))
-                        conn.commit()
-                        st.success(f"✅ Record {delete_id} deleted successfully!")
-                        st.cache_data.clear()
-                    except Exception as e:
-                        st.error(f"Error: {e}")
-            else:
-                st.warning(f"No record found with ID: {delete_id}")
-    
-    with tab4:
-        # Show analytics
-        show_viewer_dashboard_content(procurements)
-
-# ==================== BUYER DASHBOARD ====================
-def show_buyer_dashboard():
-    """Dashboard for Buyer role (bidding)"""
-    
-    # Load data
-    procurements, agencies, vendors, world_bank = load_data()
-    
-    if procurements.empty:
-        st.error("No data available.")
-        return
-    
-    # Header
-    col1, col2, col3 = st.columns([3, 2, 1])
-    with col1:
-        st.title("💰 Buyer Portal")
-        st.markdown(f"**Welcome, {st.session_state.name} (Buyer)**")
-    with col3:
-        if st.button("🚪 Logout", type="secondary"):
-            AuthenticationSystem.logout()
-            st.rerun()
-    
-    st.markdown("---")
-    
-    # Tab interface
-    tab1, tab2, tab3 = st.tabs(["🏆 Open Projects", "📝 Submit Bid", "📋 My Bids"])
-    
-    with tab1:
-        st.header("🏆 Open Procurement Projects")
-        
-        open_projects = procurements[procurements['procurement_status'] == 'Ongoing']
-        
-        if not open_projects.empty:
-            st.success(f"Found {len(open_projects)} open projects for bidding")
-            
-            for idx, project in open_projects.head(10).iterrows():
-                with st.expander(f"📋 {project['project_name']} (ID: {project['procurement_id']})", expanded=False):
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.markdown(f"**Agency:** {project['agency_name']}")
-                        st.markdown(f"**Category:** {project['procurement_category']}")
-                        st.markdown(f"**Method:** {project['procurement_method']}")
-                    
-                    with col2:
-                        st.markdown(f"**Estimated Cost:** ${project['estimated_cost']:,.2f}")
-                        if pd.notna(project['contract_start_date']):
-                            st.markdown(f"**Start Date:** {project['contract_start_date'].strftime('%Y-%m-%d')}")
-                        if pd.notna(project['contract_end_date']):
-                            st.markdown(f"**End Date:** {project['contract_end_date'].strftime('%Y-%m-%d')}")
-                    
-                    if st.button(f"💰 Bid on this Project", key=f"bid_btn_{project['procurement_id']}"):
-                        st.session_state.selected_project = project['procurement_id']
-                        st.rerun()
-        else:
-            st.info("No open projects available for bidding")
-    
-    with tab2:
-        st.header("📝 Submit New Bid")
-        
-        if 'selected_project' in st.session_state:
-            selected_id = st.session_state.selected_project
-            project = procurements[procurements['procurement_id'] == selected_id]
-            
-            if not project.empty:
-                project = project.iloc[0]
-                st.success(f"Bidding on: {project['project_name']}")
-                
-                with st.form("bid_form"):
-                    st.markdown(f"**Project:** {project['project_name']}")
-                    st.markdown(f"**Agency:** {project['agency_name']}")
-                    st.markdown(f"**Estimated Budget:** ${project['estimated_cost']:,.2f}")
-                    
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        vendor_name = st.text_input("Your Company Name", value=st.session_state.name)
-                        vendor_email = st.text_input("Contact Email")
-                    
-                    with col2:
-                        bid_amount = st.number_input(
-                            "Your Bid Amount ($)",
-                            min_value=0.0,
-                            value=float(project['estimated_cost']) * 0.9
-                        )
-                        bid_deadline = st.date_input("Proposed Completion Date")
-                    
-                    bid_details = st.text_area("Bid Proposal Details", height=100)
-                    
-                    if st.form_submit_button("📤 Submit Bid", type="primary"):
-                        if BiddingSystem.submit_bid(
-                            selected_id,
-                            "V999",
-                            vendor_name,
-                            bid_amount
-                        ):
-                            st.success("✅ Bid submitted successfully!")
-                            st.balloons()
-                            del st.session_state.selected_project
-                        else:
-                            st.error("Failed to submit bid")
-            else:
-                st.warning("Selected project not found")
-                del st.session_state.selected_project
-        else:
-            st.info("Select a project from 'Open Projects' tab to submit a bid")
-    
-    with tab3:
-        st.header("📋 My Submitted Bids")
-        
-        bids = BiddingSystem.load_bids()
-        
-        if bids:
-            st.success(f"You have submitted {len(bids)} bids")
-            
-            for bid in bids:
-                with st.expander(f"Bid #{bid['bid_id']} - Project {bid['procurement_id']}", expanded=False):
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.markdown(f"**Bid Amount:** ${bid['bid_amount']:,.2f}")
-                        st.markdown(f"**Submitted:** {bid['bid_date']}")
-                        st.markdown(f"**Status:** {bid['status']}")
-                    
-                    with col2:
-                        project = procurements[procurements['procurement_id'] == bid['procurement_id']]
-                        if not project.empty:
-                            project = project.iloc[0]
-                            st.markdown(f"**Project:** {project['project_name']}")
-                            st.markdown(f"**Agency:** {project['agency_name']}")
-        else:
-            st.info("You haven't submitted any bids yet")
-
-# ==================== VIEWER CONTENT (reusable) ====================
-def show_viewer_dashboard_content(procurements):
-    """Shared viewer content for admin dashboard"""
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Total Contracts", len(procurements))
-    with col2:
-        high_risk = len(procurements[procurements['risk_score'] >= 2])
-        st.metric("High Risk Contracts", high_risk)
-    with col3:
-        cost_overruns = procurements['high_overrun_flag'].sum()
-        st.metric("Cost Overruns >10%", int(cost_overruns))
-    with col4:
-        large_direct = procurements['large_direct_flag'].sum()
-        st.metric("Large Direct Contracts", int(large_direct))
-
 # ==================== MAIN APPLICATION FLOW ====================
 def main():
     """Main application entry point"""
@@ -800,9 +613,11 @@ def main():
         if role == 'viewer':
             show_viewer_dashboard()
         elif role == 'admin':
-            show_admin_dashboard()
+            show_viewer_dashboard()  # For now, show same as viewer
+            st.info("Admin features coming soon!")
         elif role == 'buyer':
-            show_buyer_dashboard()
+            show_viewer_dashboard()  # For now, show same as viewer
+            st.info("Buyer features coming soon!")
         else:
             st.error("Invalid role detected")
             AuthenticationSystem.logout()
@@ -821,5 +636,4 @@ if __name__ == "__main__":
         <p>🔍 Detection Rules: Cost overruns (>10%) • Large direct contracts • Short durations (<30 days)</p>
         <p>⏱️ Last updated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
     </div>
-
     """, unsafe_allow_html=True)
