@@ -3,7 +3,7 @@
 Final Year Project - Government Contract Monitoring & Fraud Detection
 
 ## Live Demo
-https://my-project-smiu.streamlit.app/
+https://final-year-project-smiu.streamlit.app/
 
 ## Features
 - Multi-user authentication (Viewer, Admin, Buyer)
