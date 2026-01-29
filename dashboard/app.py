@@ -912,3 +912,47 @@ def show_viewer_dashboard_content(procurements):
     with col3:
         cost_overruns = procurements['high_overrun_flag'].sum()
         st.metric("Cost Overruns >10%", int(cost_overruns))
+    with col4:
+        large_direct = procurements['large_direct_flag'].sum()
+        st.metric("Large Direct Contracts", int(large_direct))
+
+# ==================== MAIN APPLICATION FLOW ====================
+def main():
+    """Main application entry point"""
+    
+    # Initialize session state
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
+    
+    # Check authentication status
+    if not st.session_state.authenticated:
+        show_login_page()
+    else:
+        # Show appropriate dashboard based on role
+        role = st.session_state.get('role', 'viewer')
+        
+        if role == 'viewer':
+            show_viewer_dashboard()
+        elif role == 'admin':
+            show_admin_dashboard()
+        elif role == 'buyer':
+            show_buyer_dashboard()
+        else:
+            st.error("Invalid role detected")
+            AuthenticationSystem.logout()
+            st.rerun()
+
+# Run the main application
+if __name__ == "__main__":
+    main()
+    
+    # Footer
+    st.markdown("---")
+    st.markdown(f"""
+    <div style="text-align: center; color: #666; padding: 10px; border-radius: 10px;">
+        <h4 style="color: #1E3A8A;">Procurement Anomaly Detection System</h4>
+        <p><b>Final Year Project | Government Contract Monitoring & Fraud Detection</b></p>
+        <p>🔍 Detection Rules: Cost overruns (>10%) • Large direct contracts • Short durations (<30 days)</p>
+        <p>⏱️ Last updated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
+    </div>
+    """, unsafe_allow_html=True)
