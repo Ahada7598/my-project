@@ -1,0 +1,151 @@
+agency_code,agency_name,agency_type
+AGX-0001,Ministry of Health,Federal
+AGX-0002,Department of Finance,Federal
+AGX-0003,National Education Authority,Autonomous
+AGX-0004,Central Transport Department,Provincial
+AGX-0005,Public Infrastructure Authority,Autonomous
+AGX-0006,Ministry of Energy,Federal
+AGX-0007,Department of Housing,Provincial
+AGX-0008,National Water Resources Authority,Autonomous
+AGX-0009,Federal Information Technology Department,Federal
+AGX-0010,State Urban Development Authority,Municipal
+AGX-0011,Ministry of Commerce,Federal
+AGX-0012,Department of Industries,Provincial
+AGX-0013,National Environment Authority,Autonomous
+AGX-0014,Central Agriculture Department,Provincial
+AGX-0015,Public Social Welfare Authority,Autonomous
+AGX-0016,Ministry of Planning,Federal
+AGX-0017,Department of Urban Development,Provincial
+AGX-0018,National Economic Affairs Authority,Autonomous
+AGX-0019,Federal Public Works Department,Federal
+AGX-0020,State Statistics Authority,Municipal
+AGX-0021,Ministry of Telecommunications,Federal
+AGX-0022,Department of Water Resources,Provincial
+AGX-0023,National Housing Authority,Autonomous
+AGX-0024,Central Infrastructure Department,Provincial
+AGX-0025,Public Energy Authority,Autonomous
+AGX-0026,Ministry of Transport,Federal
+AGX-0027,Department of Information Technology,Provincial
+AGX-0028,National Health Services Authority,Autonomous
+AGX-0029,Federal Finance Department,Federal
+AGX-0030,State Education Authority,Municipal
+AGX-0031,Ministry of Industries,Federal
+AGX-0032,Department of Environment,Provincial
+AGX-0033,National Agriculture Authority,Autonomous
+AGX-0034,Central Planning Department,Provincial
+AGX-0035,Public Housing Authority,Autonomous
+AGX-0036,Ministry of Urban Development,Federal
+AGX-0037,Department of Social Welfare,Provincial
+AGX-0038,National Transport Authority,Autonomous
+AGX-0039,Federal Infrastructure Department,Federal
+AGX-0040,State Energy Authority,Municipal
+AGX-0041,Ministry of Water Resources,Federal
+AGX-0042,Department of Commerce,Provincial
+AGX-0043,National Information Technology Authority,Autonomous
+AGX-0044,Central Health Department,Provincial
+AGX-0045,Public Education Authority,Autonomous
+AGX-0046,Ministry of Statistics,Federal
+AGX-0047,Department of Public Works,Provincial
+AGX-0048,National Telecommunications Authority,Autonomous
+AGX-0049,Federal Planning Department,Federal
+AGX-0050,State Infrastructure Authority,Municipal
+AGX-0051,Ministry of Housing,Federal
+AGX-0052,Department of Energy,Provincial
+AGX-0053,National Transport Services Authority,Autonomous
+AGX-0054,Central Finance Department,Provincial
+AGX-0055,Public Health Authority,Autonomous
+AGX-0056,Ministry of Agriculture,Federal
+AGX-0057,Department of Statistics,Provincial
+AGX-0058,National Urban Development Authority,Autonomous
+AGX-0059,Federal Commerce Department,Federal
+AGX-0060,State Water Authority,Municipal
+AGX-0061,Ministry of Social Welfare,Federal
+AGX-0062,Department of Planning,Provincial
+AGX-0063,National Infrastructure Authority,Autonomous
+AGX-0064,Central Education Department,Provincial
+AGX-0065,Public Transport Authority,Autonomous
+AGX-0066,Ministry of Information Technology,Federal
+AGX-0067,Department of Housing Development,Provincial
+AGX-0068,National Energy Authority,Autonomous
+AGX-0069,Federal Urban Development Department,Federal
+AGX-0070,State Public Works Authority,Municipal
+AGX-0071,Ministry of Environment,Federal
+AGX-0072,Department of Agriculture Development,Provincial
+AGX-0073,National Finance Authority,Autonomous
+AGX-0074,Central Transport Authority,Provincial
+AGX-0075,Public Planning Authority,Autonomous
+AGX-0076,Ministry of Infrastructure,Federal
+AGX-0077,Department of Telecommunications,Provincial
+AGX-0078,National Education Services Authority,Autonomous
+AGX-0079,Federal Health Department,Federal
+AGX-0080,State Commerce Authority,Municipal
+AGX-0081,Ministry of Public Works,Federal
+AGX-0082,Department of Urban Planning,Provincial
+AGX-0083,National Housing Services Authority,Autonomous
+AGX-0084,Central Energy Authority,Provincial
+AGX-0085,Public Statistics Authority,Autonomous
+AGX-0086,Ministry of Economic Affairs,Federal
+AGX-0087,Department of Infrastructure Development,Provincial
+AGX-0088,National Transport Infrastructure Authority,Autonomous
+AGX-0089,Federal Water Resources Department,Federal
+AGX-0090,State Information Technology Authority,Municipal
+AGX-0091,Ministry of Planning and Development,Federal
+AGX-0092,Department of Health Services,Provincial
+AGX-0093,National Public Procurement Authority,Autonomous
+AGX-0094,Central Social Welfare Department,Provincial
+AGX-0095,Public Environmental Authority,Autonomous
+AGX-0096,Ministry of Energy Resources,Federal
+AGX-0097,Department of Economic Affairs,Provincial
+AGX-0098,National Statistics Authority,Autonomous
+AGX-0099,Federal Transport Department,Federal
+AGX-0100,State Housing Authority,Municipal
+AGX-0101,Ministry of Rural Development,Federal
+AGX-0102,Department of Industrial Development,Provincial
+AGX-0103,National Digital Services Authority,Autonomous
+AGX-0104,Central Water Management Department,Provincial
+AGX-0105,Public Infrastructure Services Authority,Autonomous
+AGX-0106,Ministry of Technology and Innovation,Federal
+AGX-0107,Department of Regional Planning,Provincial
+AGX-0108,National Smart Cities Authority,Autonomous
+AGX-0109,Federal Urban Services Department,Federal
+AGX-0110,State Transport Services Authority,Municipal
+AGX-0111,Ministry of Climate Change,Federal
+AGX-0112,Department of Environmental Protection,Provincial
+AGX-0113,National Renewable Energy Authority,Autonomous
+AGX-0114,Central Logistics Department,Provincial
+AGX-0115,Public Development Authority,Autonomous
+AGX-0116,Ministry of Investment,Federal
+AGX-0117,Department of Trade Development,Provincial
+AGX-0118,National Export Promotion Authority,Autonomous
+AGX-0119,Federal Supply Chain Department,Federal
+AGX-0120,State Industrial Authority,Municipal
+AGX-0121,Ministry of Maritime Affairs,Federal
+AGX-0122,Department of Port Management,Provincial
+AGX-0123,National Shipping Authority,Autonomous
+AGX-0124,Central Aviation Department,Provincial
+AGX-0125,Public Logistics Authority,Autonomous
+AGX-0126,Ministry of Aviation,Federal
+AGX-0127,Department of Airport Services,Provincial
+AGX-0128,National Air Transport Authority,Autonomous
+AGX-0129,Federal Communication Department,Federal
+AGX-0130,State Logistics Authority,Municipal
+AGX-0131,Ministry of Science and Technology,Federal
+AGX-0132,Department of Research and Development,Provincial
+AGX-0133,National Innovation Authority,Autonomous
+AGX-0134,Central Digital Transformation Department,Provincial
+AGX-0135,Public Technology Services Authority,Autonomous
+AGX-0136,Ministry of Population Welfare,Federal
+AGX-0137,Department of Community Development,Provincial
+AGX-0138,National Social Protection Authority,Autonomous
+AGX-0139,Federal Community Services Department,Federal
+AGX-0140,State Welfare Authority,Municipal
+AGX-0141,Ministry of Youth Affairs,Federal
+AGX-0142,Department of Sports Development,Provincial
+AGX-0143,National Sports Authority,Autonomous
+AGX-0144,Central Cultural Affairs Department,Provincial
+AGX-0145,Public Arts and Culture Authority,Autonomous
+AGX-0146,Ministry of Tourism,Federal
+AGX-0147,Department of Heritage Protection,Provincial
+AGX-0148,National Tourism Development Authority,Autonomous
+AGX-0149,Federal Cultural Affairs Department,Federal
+AGX-0150,State Tourism Authority,Municipal
